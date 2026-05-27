@@ -43,7 +43,7 @@ namespace CyberSecurityWPFChatbot
         delegate string SentimentDelegate(string message);
 
         // CONSTRUCTOR
-        public MainWindow()
+        public MainWindow() 
         {
             InitializeComponent();
 
