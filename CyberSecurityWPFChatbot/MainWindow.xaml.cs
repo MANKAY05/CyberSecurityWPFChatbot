@@ -46,7 +46,7 @@ namespace CyberSecurityWPFChatbot
         public MainWindow()  
         {
             InitializeComponent();
-
+             
             // PLAY GREETING VOICE
             PlayGreeting();
 
