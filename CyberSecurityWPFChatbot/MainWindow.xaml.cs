@@ -10,11 +10,11 @@ namespace CyberSecurityWPFChatbot
 {
     public partial class MainWindow : Window
     {
-        // MEMORY FEATURE
+        // MEMORY FEATURE 
         Dictionary<string, string> memory =
             new Dictionary<string, string>();
 
-        // GENERIC COLLECTION
+        // GENERIC COLLECTION 
         List<string> greetings =
             new List<string>()
         {
