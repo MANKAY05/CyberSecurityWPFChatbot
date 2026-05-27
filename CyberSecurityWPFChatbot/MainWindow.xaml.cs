@@ -5,6 +5,7 @@ using System.Media;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Speech.Synthesis;
 
 namespace CyberSecurityWPFChatbot
 {
@@ -57,19 +58,9 @@ namespace CyberSecurityWPFChatbot
         // VOICE GREETING METHOD
         private void PlayGreeting()
         {
-            try
-            {
-                SoundPlayer player =
-                    new SoundPlayer("\"C:\\Users\\Keaha\\Downloads\\greeting (online-audio-converter.com).wav\"");
-
-                player.PlaySync();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(
-                    "Voice greeting error: "
-                    + ex.Message);
-            }
+            SpeechSynthesizer synthesizer =
+                new SpeechSynthesizer();
+            synthesizer.SpeakAsync("Hello Welcome to Moilwa's Cybersecurity Chatbot!"); 
         }
 
         // SEND BUTTON EVENT
