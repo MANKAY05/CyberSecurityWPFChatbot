@@ -51,7 +51,7 @@ namespace CyberSecurityWPFChatbot
             PlayGreeting();
 
             // WELCOME MESSAGE
-            AddMessage(
+            AddMessage( 
                 "Bot: Hello! I am your Cybersecurity Assistant.");
         }
 
