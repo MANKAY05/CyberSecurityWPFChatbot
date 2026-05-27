@@ -1,21 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Media;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Windows.Media;
 using System.Speech.Synthesis;
 
 namespace CyberSecurityWPFChatbot
 {
     public partial class MainWindow : Window
     {
-        // MEMORY FEATURE 
+        // MEMORY FEATURE
         Dictionary<string, string> memory =
             new Dictionary<string, string>();
 
-        // GENERIC COLLECTION 
+        // GREETINGS
         List<string> greetings =
             new List<string>()
         {
@@ -25,51 +25,112 @@ namespace CyberSecurityWPFChatbot
         };
 
         // CYBERSECURITY RESPONSES
-        Dictionary<string, string> cyberResponses =
-            new Dictionary<string, string>()
+        Dictionary<string, List<string>> cyberResponses =
+            new Dictionary<string, List<string>>()
         {
-            {"password", "Always use strong passwords."},
+            {
+                "password",
+                new List<string>()
+                {
+                    "Always use strong passwords with symbols and numbers.",
+                    "Avoid using your name or birth date as a password.",
+                    "Change your passwords regularly for better security."
+                }
+            },
 
-            {"phishing", "Avoid suspicious emails and links."},
+            {
+                "phishing",
+                new List<string>()
+                {
+                    "Be careful of fake emails asking for personal information.",
+                    "Never click suspicious links from unknown senders.",
+                    "Scammers often pretend to be banks or trusted organisations.",
+                    "Always check the sender email address carefully.",
+                    "Do not share passwords through email messages."
+                }
+            },
 
-            {"virus", "Install antivirus software."},
+            {
+                "virus",
+                new List<string>()
+                {
+                    "Install antivirus software and keep it updated.",
+                    "Avoid downloading files from unknown websites.",
+                    "Viruses can damage your files and steal information."
+                }
+            },
 
-            {"2fa", "Two factor authentication improves security."},
+            {
+                "2fa",
+                new List<string>()
+                {
+                    "Two-factor authentication improves account security.",
+                    "2FA adds an extra verification step when logging in.",
+                    "Enable 2FA on important accounts like email and banking."
+                }
+            },
 
-            {"hacker", "Hackers attempt unauthorized access."}
+            {
+                "privacy",
+                new List<string>()
+                {
+                    "Review your social media privacy settings regularly.",
+                    "Avoid sharing sensitive information online.",
+                    "Privacy helps protect your personal information."
+                }
+            },
+
+            {
+                "hacker",
+                new List<string>()
+                {
+                    "Hackers try to gain unauthorized access to systems.",
+                    "Avoid weak passwords to reduce hacking risks.",
+                    "Keep your software updated to prevent attacks."
+                }
+            }
         };
+
+        // RANDOM OBJECT
+        Random random = new Random();
+
+        // CURRENT TOPIC
+        string currentTopic = "";
+
+        // USER NAME CHECK
+        bool userNameSaved = false;
 
         // DELEGATE
         delegate string SentimentDelegate(string message);
 
+        // VOICE SYNTHESIS
+        SpeechSynthesizer synthesizer =
+            new SpeechSynthesizer();
+
         // CONSTRUCTOR
-        public MainWindow()  
+        public MainWindow()
         {
             InitializeComponent();
-             
-            // PLAY GREETING VOICE
-            PlayGreeting();
 
-            // WELCOME MESSAGE
-            AddMessage( 
-                "Bot: Hello! I am your Cybersecurity Assistant.");
-        }
+            // VOICE SETTINGS
+            synthesizer.Volume = 100;
+            synthesizer.Rate = 0;
 
-        // VOICE GREETING METHOD
-        private void PlayGreeting()
-        {
-            SpeechSynthesizer synthesizer =
-                new SpeechSynthesizer();
-            synthesizer.SpeakAsync("Hello Welcome to Moilwa's Cybersecurity Chatbot!"); 
+            // BOT GREETING
+            AddBotMessage(
+                "Hello! Welcome to MOILWA'S CYBER BOT.");
+
+            AddBotMessage(
+                "Before we begin, what is your name?");
         }
 
         // SEND BUTTON EVENT
         private void btnSend_Click(object sender, RoutedEventArgs e)
         {
             string userMessage =
-                txtMessage.Text.ToLower();
+                txtMessage.Text.Trim().ToLower();
 
-            // EMPTY MESSAGE CHECK
+            // EMPTY CHECK
             if (userMessage == "")
             {
                 MessageBox.Show(
@@ -79,8 +140,25 @@ namespace CyberSecurityWPFChatbot
             }
 
             // DISPLAY USER MESSAGE
-            AddMessage(
-                "You: " + userMessage);
+            AddUserMessage(userMessage);
+
+            // SAVE USER NAME
+            if (!userNameSaved)
+            {
+                memory["username"] = userMessage;
+
+                userNameSaved = true;
+
+                AddBotMessage(
+                    "Nice to meet you!");
+
+                AddBotMessage(
+                    "What cybersecurity topic would you like to learn about?");
+
+                txtMessage.Clear();
+
+                return;
+            }
 
             // SENTIMENT DETECTION
             SentimentDelegate sentiment =
@@ -91,47 +169,91 @@ namespace CyberSecurityWPFChatbot
 
             if (moodResponse != "")
             {
-                AddMessage(
-                    "Bot: " + moodResponse);
+                AddBotMessage(moodResponse);
             }
 
-            // MEMORY FEATURE
-            if (userMessage.Contains("my name is"))
+            // RECALL USER NAME
+            if (userMessage.Contains("what is my name"))
             {
-                string name =
-                    userMessage.Replace(
-                        "my name is", "").Trim();
-
-                memory["username"] = name;
-
-                AddMessage(
-                    "Bot: Nice to meet you "
-                    + name);
+                AddBotMessage(
+                    "Your name is " +
+                    memory["username"]);
             }
 
-            // RECALL MEMORY
-            else if (userMessage.Contains(
-                "what is my name"))
+            // USER INTEREST MEMORY
+            else if (userMessage.Contains("i'm interested in") ||
+                     userMessage.Contains("i am interested in"))
             {
-                if (memory.ContainsKey("username"))
+                string topic =
+                    userMessage
+                    .Replace("i'm interested in", "")
+                    .Replace("i am interested in", "")
+                    .Trim();
+
+                memory["interest"] = topic;
+
+                AddBotMessage(
+                    "Great! I will remember that you are interested in " +
+                    topic + ".");
+
+                AddBotMessage(
+                    "Learning about " +
+                    topic +
+                    " can help you stay safer online.");
+            }
+
+            // RECALL USER INTEREST
+            else if (userMessage.Contains("what am i interested in"))
+            {
+                if (memory.ContainsKey("interest"))
                 {
-                    AddMessage(
-                        "Bot: Your name is "
-                        + memory["username"]);
+                    AddBotMessage(
+                        "You are interested in " +
+                        memory["interest"]);
                 }
                 else
                 {
-                    AddMessage(
-                        "Bot: I do not know your name yet.");
+                    AddBotMessage(
+                        "You have not shared your interests yet.");
                 }
             }
 
-            // GREETING DETECTION
+            // GREETINGS
             else if (greetings.Any(
                 g => userMessage.Contains(g)))
             {
-                AddMessage(
-                    "Bot: Hello! How can I help you?");
+                AddBotMessage(
+                    "Hello! How can I help you today?");
+            }
+
+            // FOLLOW-UP CONVERSATION
+            else if (userMessage.Contains("tell me more") ||
+                     userMessage.Contains("another tip") ||
+                     userMessage.Contains("explain more") ||
+                     userMessage.Contains("continue"))
+            {
+                if (currentTopic != "")
+                {
+                    GiveCyberResponse(currentTopic);
+                }
+                else
+                {
+                    AddBotMessage(
+                        "Please choose a cybersecurity topic first.");
+                }
+            }
+
+            // PHISHING SPECIAL HANDLING
+            else if (userMessage.Contains("phishing scam") ||
+                     userMessage.Contains("email scam") ||
+                     userMessage.Contains("fake email"))
+            {
+                currentTopic = "phishing";
+
+                AddBotMessage(
+                    "Phishing scams are dangerous because attackers try to trick users into revealing personal information.");
+
+                GiveCyberResponse("phishing");
             }
 
             // CYBERSECURITY RESPONSES
@@ -143,10 +265,12 @@ namespace CyberSecurityWPFChatbot
                 {
                     if (userMessage.Contains(item.Key))
                     {
-                        AddMessage(
-                            "Bot: " + item.Value);
+                        currentTopic = item.Key;
+
+                        GiveCyberResponse(item.Key);
 
                         found = true;
+
                         break;
                     }
                 }
@@ -154,44 +278,167 @@ namespace CyberSecurityWPFChatbot
                 // DEFAULT RESPONSE
                 if (!found)
                 {
-                    AddMessage(
-                        "Bot: Ask me something about cybersecurity.");
+                    AddBotMessage(
+                        "I am not sure I understand.");
+
+                    AddBotMessage(
+                        "Try asking about passwords, phishing, viruses, privacy, hackers or 2FA.");
                 }
             }
 
-            // CLEAR INPUT BOX
+            // CLEAR INPUT
             txtMessage.Clear();
         }
 
-        // SENTIMENT DETECTION METHOD
+        // RANDOM RESPONSE METHOD
+        private void GiveCyberResponse(string topic)
+        {
+            List<string> responses =
+                cyberResponses[topic];
+
+            int index =
+                random.Next(responses.Count);
+
+            string selectedResponse =
+                responses[index];
+
+            AddBotMessage(selectedResponse);
+        }
+
+        // SENTIMENT DETECTION
         private string DetectSentiment(string message)
         {
-            if (message.Contains("sad") ||
-                message.Contains("angry"))
+            // WORRIED
+            if (message.Contains("worried") ||
+                message.Contains("scared") ||
+                message.Contains("frustrated"))
             {
-                return "I am sorry you feel that way.";
+                return
+                    "It is understandable to feel that way. Cyber threats can be stressful, but there are ways to stay protected.";
             }
 
+            // SAD OR ANGRY
+            else if (message.Contains("sad") ||
+                     message.Contains("angry"))
+            {
+                return
+                    "I am sorry you feel that way. Let me help you with some cybersecurity advice.";
+            }
+
+            // HAPPY
             else if (message.Contains("happy") ||
                      message.Contains("good"))
             {
-                return "That is great to hear!";
+                return
+                    "That is great to hear!";
+            }
+
+            // CURIOUS
+            else if (message.Contains("curious"))
+            {
+                return
+                    "Curiosity is important when learning cybersecurity.";
             }
 
             return "";
         }
 
-        // ADD TEXT TO CHAT AREA
-        private void AddMessage(string message)
+        // BOT MESSAGE - LEFT SIDE
+        private void AddBotMessage(string message)
         {
             Paragraph paragraph =
                 new Paragraph();
 
-            paragraph.Inlines.Add(message);
+            paragraph.TextAlignment =
+                TextAlignment.Left;
+
+            paragraph.Margin =
+                new Thickness(10);
+
+            Border border =
+                new Border();
+
+            border.Background =
+                Brushes.DarkSlateBlue;
+
+            border.CornerRadius =
+                new CornerRadius(10);
+
+            border.Padding =
+                new Thickness(10);
+
+            TextBlock text =
+                new TextBlock();
+
+            text.Text =
+                "Bot: " + message;
+
+            text.Foreground =
+                Brushes.White;
+
+            text.TextWrapping =
+                TextWrapping.Wrap;
+
+            border.Child = text;
+
+            InlineUIContainer container =
+                new InlineUIContainer(border);
+
+            paragraph.Inlines.Add(container);
 
             rtbChat.Document.Blocks.Add(paragraph);
 
-            // AUTO SCROLL TO LATEST MESSAGE
+            rtbChat.ScrollToEnd();
+
+            // BOT VOICE
+            synthesizer.SpeakAsync(message);
+        }
+
+        // USER MESSAGE - RIGHT SIDE
+        private void AddUserMessage(string message)
+        {
+            Paragraph paragraph =
+                new Paragraph();
+
+            paragraph.TextAlignment =
+                TextAlignment.Right;
+
+            paragraph.Margin =
+                new Thickness(10);
+
+            Border border =
+                new Border();
+
+            border.Background =
+                Brushes.DarkCyan;
+
+            border.CornerRadius =
+                new CornerRadius(10);
+
+            border.Padding =
+                new Thickness(10);
+
+            TextBlock text =
+                new TextBlock();
+
+            text.Text =
+                "You: " + message;
+
+            text.Foreground =
+                Brushes.White;
+
+            text.TextWrapping =
+                TextWrapping.Wrap;
+
+            border.Child = text;
+
+            InlineUIContainer container =
+                new InlineUIContainer(border);
+
+            paragraph.Inlines.Add(container);
+
+            rtbChat.Document.Blocks.Add(paragraph);
+
             rtbChat.ScrollToEnd();
         }
     }
