@@ -9,7 +9,7 @@ public class DatabaseHelper
     public MySqlConnection GetConnection()
     {
         return new MySqlConnection(connectionString);
-    }    
+    }     
 
     public void SaveActivity(string activity)
     {
