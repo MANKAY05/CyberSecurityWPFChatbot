@@ -85,6 +85,13 @@
                     HorizontalAlignment="Right"
                     Margin="0,8,15,8"
                     Click="btnSend_Click"/>
+            <Button Name="btnHistory"
+        Content="History"
+        Width="90"
+        Height="35"
+        HorizontalAlignment="Right"
+        Margin="0,8,110,8"
+        Click="btnHistory_Click"/>
         </Grid>
 
     </Grid>

@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Speech.Synthesis;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
-using System.Speech.Synthesis;
 
 namespace CyberSecurityWPFChatbot
 {
@@ -107,6 +108,23 @@ namespace CyberSecurityWPFChatbot
         SpeechSynthesizer synthesizer =
             new SpeechSynthesizer();
 
+        DatabaseHelper database =
+    new DatabaseHelper();
+        TaskManager taskManager =
+    new TaskManager();
+
+        QuizManager quizManager =
+            new QuizManager();
+
+        ActivityLogger logger =
+            new ActivityLogger();
+
+        NLPProcessor nlp =
+            new NLPProcessor();
+
+        bool quizStarted = false;
+       
+
         // CONSTRUCTOR
         public MainWindow()
         {
@@ -122,6 +140,15 @@ namespace CyberSecurityWPFChatbot
 
             AddBotMessage(
                 "Before we begin, what is your name?");
+        }
+        private void btnHistory_Click(
+    object sender,
+    RoutedEventArgs e)
+        {
+            HistoryWindow history =
+                new HistoryWindow();
+
+            history.ShowDialog();
         }
 
         // SEND BUTTON EVENT
@@ -141,6 +168,33 @@ namespace CyberSecurityWPFChatbot
 
             // DISPLAY USER MESSAGE
             AddUserMessage(userMessage);
+            logger.AddLog(
+    "User entered: " +
+    userMessage);
+
+            database.SaveActivity(
+                "User entered: " +
+                userMessage);
+
+            string nlpResponse =
+                nlp.ProcessInput(userMessage);
+
+            if (nlpResponse != "")
+            {
+                AddBotMessage(nlpResponse);
+
+                logger.AddLog(
+                    "NLP Response Generated");
+
+                database.SaveActivity(
+                    "NLP Response Generated");
+
+                txtMessage.Clear();
+
+                return;
+            }
+
+
 
             // SAVE USER NAME
             if (!userNameSaved)
@@ -171,14 +225,88 @@ namespace CyberSecurityWPFChatbot
             {
                 AddBotMessage(moodResponse);
             }
-
-            // RECALL USER NAME
-            if (userMessage.Contains("what is my name"))
+            if (userMessage.StartsWith("add task"))
             {
+                string task =
+                    userMessage
+                    .Replace("add task", "")
+                    .Trim();
+
+                taskManager.AddTask(task);
+
                 AddBotMessage(
-                    "Your name is " +
-                    memory["username"]);
+                    "Task added successfully.");
+
+                logger.AddLog(
+                    "Task Added");
+
+                database.SaveActivity(
+                    "Task Added");
+
+                txtMessage.Clear();
+
+                return;
             }
+
+            if (quizStarted)
+            {
+                quizManager.CheckAnswer(
+                    userMessage);
+
+                quizManager.CurrentQuestion++;
+
+                if (quizManager.CurrentQuestion <
+                    quizManager.Questions.Count)
+                {
+                    AddBotMessage(
+                        quizManager.Questions[
+                            quizManager.CurrentQuestion]);
+                }
+                else
+                {
+                    AddBotMessage(
+                        quizManager.GetCorrections());
+
+                    logger.AddLog(
+                        "Quiz Completed");
+
+                    database.SaveActivity(
+                        "Quiz Completed");
+
+                    quizStarted = false;
+
+                    quizManager.ResetQuiz();
+                }
+
+                txtMessage.Clear();
+
+                return;
+            }
+            if (userMessage == "start quiz")
+            {
+                quizStarted = true;
+
+                quizManager.CurrentQuestion = 0;
+
+                quizManager.Score = 0;
+
+                AddBotMessage(
+                    "Cybersecurity Quiz Started!");
+
+                AddBotMessage(
+                    quizManager.Questions[0]);
+
+                logger.AddLog(
+                    "Quiz Started");
+
+                database.SaveActivity(
+                    "Quiz Started");
+
+                txtMessage.Clear();
+
+                return;
+            }
+
 
             // USER INTEREST MEMORY
             else if (userMessage.Contains("i'm interested in") ||
@@ -225,6 +353,15 @@ namespace CyberSecurityWPFChatbot
                 AddBotMessage(
                     "Hello! How can I help you today?");
             }
+            if (userMessage == "show logs")
+            {
+                AddBotMessage(
+                    logger.ViewLogs());
+
+                txtMessage.Clear();
+
+                return;
+            }
 
             // FOLLOW-UP CONVERSATION
             else if (userMessage.Contains("tell me more") ||
@@ -253,7 +390,12 @@ namespace CyberSecurityWPFChatbot
                 AddBotMessage(
                     "Phishing scams are dangerous because attackers try to trick users into revealing personal information.");
 
-                GiveCyberResponse("phishing");
+                string botReply =
+     GiveCyberResponse("phishing");
+
+                database.SaveChat(
+                    userMessage,
+                    botReply);
             }
 
             // CYBERSECURITY RESPONSES
@@ -267,7 +409,12 @@ namespace CyberSecurityWPFChatbot
                     {
                         currentTopic = item.Key;
 
-                        GiveCyberResponse(item.Key);
+                        string botReply =
+     GiveCyberResponse(item.Key);
+
+                        database.SaveChat(
+                            userMessage,
+                            botReply);
 
                         found = true;
 
@@ -291,18 +438,31 @@ namespace CyberSecurityWPFChatbot
         }
 
         // RANDOM RESPONSE METHOD
-        private void GiveCyberResponse(string topic)
+        private string GiveCyberResponse(
+     string topic)
         {
             List<string> responses =
                 cyberResponses[topic];
 
             int index =
-                random.Next(responses.Count);
+                random.Next(
+                    responses.Count);
 
             string selectedResponse =
                 responses[index];
 
-            AddBotMessage(selectedResponse);
+            AddBotMessage(
+                selectedResponse);
+
+            logger.AddLog(
+                "Cyber Response: " +
+                topic);
+
+            database.SaveActivity(
+                "Cyber Response: " +
+                topic);
+
+            return selectedResponse;
         }
 
         // SENTIMENT DETECTION
@@ -401,7 +561,7 @@ namespace CyberSecurityWPFChatbot
                 new Paragraph();
 
             paragraph.TextAlignment =
-                TextAlignment.Right;
+                TextAlignment.Right; 
 
             paragraph.Margin =
                 new Thickness(10);
