@@ -1,0 +1,20 @@
+CREATE DATABASE IF NOT EXISTS CyberBotDB;
+
+USE CyberBotDB;
+
+CREATE TABLE ChatHistory
+(
+    Id INT AUTO_INCREMENT PRIMARY KEY,
+    UserMessage VARCHAR(500),
+    BotResponse VARCHAR(500),
+    ChatDate DATETIME
+);
+
+CREATE TABLE ActivityLog
+(
+    Id INT AUTO_INCREMENT PRIMARY KEY,
+    Activity VARCHAR(500),
+    LogDate DATETIME
+);
+
+CREATE DATABASE CyberSecurityChatbot;
